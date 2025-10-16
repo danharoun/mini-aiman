@@ -1,0 +1,49 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background -->
+  <rect width="512" height="512" fill="#000000"/>
+  
+  <!-- Cyan gradient circle -->
+  <defs>
+    <radialGradient id="hologram" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#70c1ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a3ff;stop-opacity:0.5" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Main circle -->
+  <circle cx="256" cy="256" r="170.66666666666666" fill="url(#hologram)" opacity="0.9"/>
+  
+  <!-- Inner rings -->
+  <circle cx="256" cy="256" r="128" fill="none" stroke="#70c1ff" stroke-width="12.8" opacity="0.6"/>
+  <circle cx="256" cy="256" r="102.4" fill="none" stroke="#70c1ff" stroke-width="10.24" opacity="0.4"/>
+  
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="34.13333333333333" fill="#ffffff" opacity="0.8"/>
+  
+  <!-- Scanlines effect -->
+  <line x1="0" y1="0" x2="512" y2="0" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="20" x2="512" y2="20" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="40" x2="512" y2="40" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="60" x2="512" y2="60" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="80" x2="512" y2="80" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="100" x2="512" y2="100" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="120" x2="512" y2="120" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="140" x2="512" y2="140" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="160" x2="512" y2="160" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="180" x2="512" y2="180" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="200" x2="512" y2="200" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="220" x2="512" y2="220" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="240" x2="512" y2="240" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="260" x2="512" y2="260" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="280" x2="512" y2="280" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="300" x2="512" y2="300" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="320" x2="512" y2="320" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="340" x2="512" y2="340" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="360" x2="512" y2="360" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="380" x2="512" y2="380" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="400" x2="512" y2="400" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="420" x2="512" y2="420" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="440" x2="512" y2="440" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="460" x2="512" y2="460" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+  <line x1="0" y1="480" x2="512" y2="480" stroke="#70c1ff" stroke-width="1" opacity="0.1"/>
+</svg>

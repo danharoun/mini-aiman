@@ -10,11 +10,13 @@ import {
 import { cn } from '@/lib/utils';
 import { AgentTile } from './agent-tile';
 import { AvatarTile } from './avatar-tile';
+import { TalkingHeadTile } from './talking-head-tile';
 import { VideoTile } from './video-tile';
 
 const MotionVideoTile = motion.create(VideoTile);
 const MotionAgentTile = motion.create(AgentTile);
 const MotionAvatarTile = motion.create(AvatarTile);
+const MotionTalkingHeadTile = motion.create(TalkingHeadTile);
 
 const animationProps = {
   initial: {
@@ -88,9 +90,11 @@ export function useLocalTrackRef(source: Track.Source) {
 
 interface MediaTilesProps {
   chatOpen: boolean;
+  useTalkingHead?: boolean; // Enable TalkingHead 3D avatar
+  onHeadInstanceReady?: (head: any) => void;
 }
 
-export function MediaTiles({ chatOpen }: MediaTilesProps) {
+export function MediaTiles({ chatOpen, useTalkingHead = false, onHeadInstanceReady }: MediaTilesProps) {
   const {
     state: agentState,
     audioTrack: agentAudioTrack,
@@ -109,7 +113,7 @@ export function MediaTiles({ chatOpen }: MediaTilesProps) {
   };
   const agentAnimate = {
     ...animationProps.animate,
-    scale: chatOpen ? 1 : 3,
+    scale: chatOpen ? 1 : 12, // MASSIVE - 12x scale for huge fullscreen avatar
     transition,
   };
   const avatarAnimate = {
@@ -122,8 +126,9 @@ export function MediaTiles({ chatOpen }: MediaTilesProps) {
   const isAvatar = agentVideoTrack !== undefined;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-8 bottom-32 z-50 md:top-12 md:bottom-40">
-      <div className="relative mx-auto h-full max-w-2xl px-4 md:px-0">
+    <div className="fixed inset-0 z-40">
+      {/* FULLSCREEN - avatar now takes the ENTIRE screen */}
+      <div className="relative mx-auto h-full w-full pointer-events-auto">
         <div className={cn(classNames.grid)}>
           {/* agent */}
           <div
@@ -136,32 +141,48 @@ export function MediaTiles({ chatOpen }: MediaTilesProps) {
             ])}
           >
             <AnimatePresence mode="popLayout">
-              {!isAvatar && (
-                // audio-only agent
-                <MotionAgentTile
-                  key="agent"
-                  layoutId="agent"
+              {useTalkingHead ? (
+                // TalkingHead 3D avatar
+                <MotionTalkingHeadTile
+                  key="talkinghead"
+                  layoutId="talkinghead"
                   {...animationProps}
                   animate={agentAnimate}
                   transition={agentLayoutTransition}
-                  state={agentState}
-                  audioTrack={agentAudioTrack}
-                  className={cn(chatOpen ? 'h-[90px]' : 'h-auto w-full')}
+                  cameraView={'full'} // Always keep full view
+                  className="h-screen w-screen" // Always fullscreen
+                  onHeadReady={onHeadInstanceReady}
                 />
-              )}
-              {isAvatar && (
-                // avatar agent
-                <MotionAvatarTile
-                  key="avatar"
-                  layoutId="avatar"
-                  {...animationProps}
-                  animate={avatarAnimate}
-                  transition={avatarLayoutTransition}
-                  videoTrack={agentVideoTrack}
-                  className={cn(
-                    chatOpen ? 'h-[90px] [&>video]:h-[90px] [&>video]:w-auto' : 'h-auto w-full'
+              ) : (
+                <>
+                  {!isAvatar && (
+                    // audio-only agent
+                    <MotionAgentTile
+                      key="agent"
+                      layoutId="agent"
+                      {...animationProps}
+                      animate={agentAnimate}
+                      transition={agentLayoutTransition}
+                      state={agentState}
+                      audioTrack={agentAudioTrack}
+                      className={cn(chatOpen ? 'h-[90px]' : 'h-auto w-full')}
+                    />
                   )}
-                />
+                  {isAvatar && (
+                    // avatar agent
+                    <MotionAvatarTile
+                      key="avatar"
+                      layoutId="avatar"
+                      {...animationProps}
+                      animate={avatarAnimate}
+                      transition={avatarLayoutTransition}
+                      videoTrack={agentVideoTrack}
+                      className={cn(
+                        chatOpen ? 'h-[90px] [&>video]:h-[90px] [&>video]:w-auto' : 'h-auto w-full'
+                      )}
+                    />
+                  )}
+                </>
               )}
             </AnimatePresence>
           </div>
