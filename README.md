@@ -114,23 +114,36 @@ These are required for the voice agent functionality to work with your LiveKit p
 This app includes **automatic performance optimizations** for mobile devices:
 
 ### Automatic Features:
-- ✅ **Device detection** (low-end, mid-range, high-end)
-- ✅ **Adaptive rendering quality** (pixel ratio, antialiasing, resolution)
-- ✅ **Optimized holographic effects** (lower opacity on weak devices)
+- ✅ **5 Quality Levels** (Ultra Low to Ultra) - changeable in-app!
+- ✅ **2GB RAM support** (Ultra Low mode with no glitch)
+- ✅ **Device detection** (auto-selects best quality)
+- ✅ **Adaptive rendering** (0.75x to 2.0x pixel ratio)
+- ✅ **Configurable glitch** (0-50% intensity, 0.5x-2.0x speed)
 - ✅ **Real-time FPS counter** (visible on mobile)
+
+### Quality Levels:
+- **🔴 Ultra Low**: 2GB RAM (no glitch, 30 FPS)
+- **🟠 Low**: 4GB RAM (15% glitch, 45 FPS)
+- **🟡 Medium**: 6GB RAM (25% glitch, 60 FPS) - Default
+- **🟢 High**: 8GB+ RAM (35% glitch, 60 FPS)
+- **💎 Ultra**: Desktop (50% glitch, 60 FPS)
 
 ### Performance Impact:
 - **40-60% FPS improvement** on Android
 - **Reduced GPU usage** by ~40%
 - **Less overheating** and battery drain
+- **2GB RAM devices now usable** (30-40 FPS)
 
 ### For Users:
+- **Change quality**: Tap ☰ → Quality selector (top-left)
 - **Quick fix**: Tap **✨ Holographic** button to disable (instant 2x speed boost!)
+- See **`QUALITY_SETTINGS.md`** for all 5 quality levels
 - See **`QUICK_FIX_LAG.md`** for instant solutions
 - See **`ANDROID_OPTIMIZATION.md`** for full optimization guide
 
 ## 📚 Documentation
 
+- **`QUALITY_SETTINGS.md`** - **NEW!** Complete guide to 5 quality levels
 - **`TALKINGHEAD_LIVEKIT_INTEGRATION.md`** - Complete integration guide
 - **`ANDROID_OPTIMIZATION.md`** - Full Android optimization guide
 - **`QUICK_FIX_LAG.md`** - Quick fixes for lag

@@ -20,21 +20,39 @@ interface AppProps {
 
 export function App({ appConfig }: AppProps) {
   const room = useMemo(() => new Room(), []);
-  const [sessionStarted, setSessionStarted] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(true); // AUTO-START: Changed to true
   const { refreshConnectionDetails, existingOrRefreshConnectionDetails } =
     useConnectionDetails(appConfig);
 
   useEffect(() => {
     const onDisconnected = () => {
-      setSessionStarted(false);
-      refreshConnectionDetails();
+      console.log('⚠️ Disconnected from room. Auto-reconnecting...');
+      
+      toastAlert({
+        title: 'Connection Lost',
+        description: 'Reconnecting automatically...',
+      });
+      
+      // Auto-reconnect after disconnect
+      setTimeout(() => {
+        console.log('🔄 Attempting auto-reconnect...');
+        setSessionStarted(false);
+        refreshConnectionDetails();
+        
+        // Re-enable session after a brief delay
+        setTimeout(() => {
+          setSessionStarted(true);
+        }, 500);
+      }, 1000);
     };
+    
     const onMediaDevicesError = (error: Error) => {
       toastAlert({
         title: 'Encountered an error with your media devices',
         description: `${error.name}: ${error.message}`,
       });
     };
+    
     room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
     room.on(RoomEvent.Disconnected, onDisconnected);
     return () => {
@@ -45,30 +63,60 @@ export function App({ appConfig }: AppProps) {
 
   useEffect(() => {
     let aborted = false;
-    if (sessionStarted && room.state === 'disconnected') {
-      Promise.all([
-        room.localParticipant.setMicrophoneEnabled(true, undefined, {
-          preConnectBuffer: appConfig.isPreConnectBufferEnabled,
-        }),
-        existingOrRefreshConnectionDetails().then((connectionDetails) =>
-          room.connect(connectionDetails.serverUrl, connectionDetails.participantToken)
-        ),
-      ]).catch((error) => {
-        if (aborted) {
-          // Once the effect has cleaned up after itself, drop any errors
-          //
-          // These errors are likely caused by this effect rerunning rapidly,
-          // resulting in a previous run `disconnect` running in parallel with
-          // a current run `connect`
-          return;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const attemptConnection = async () => {
+      if (aborted) return;
+      
+      try {
+        await Promise.all([
+          room.localParticipant.setMicrophoneEnabled(true, undefined, {
+            preConnectBuffer: appConfig.isPreConnectBufferEnabled,
+          }),
+          existingOrRefreshConnectionDetails().then((connectionDetails) =>
+            room.connect(connectionDetails.serverUrl, connectionDetails.participantToken)
+          ),
+        ]);
+        
+        console.log('✅ Connected successfully');
+      } catch (error: any) {
+        if (aborted) return;
+        
+        retryCount++;
+        console.error(`❌ Connection failed (attempt ${retryCount}/${maxRetries}):`, error);
+        
+        if (retryCount < maxRetries) {
+          toastAlert({
+            title: 'Connection Failed',
+            description: `Retrying... (${retryCount}/${maxRetries})`,
+          });
+          
+          // Wait before retrying (exponential backoff)
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Retry
+          await attemptConnection();
+        } else {
+          toastAlert({
+            title: 'Connection Failed',
+            description: 'Unable to connect after multiple attempts. Please refresh the page.',
+          });
+          
+          // Auto-refresh after final failure
+          setTimeout(() => {
+            console.log('🔄 Auto-refreshing page after connection failure...');
+            window.location.reload();
+          }, 3000);
         }
-
-        toastAlert({
-          title: 'There was an error connecting to the agent',
-          description: `${error.name}: ${error.message}`,
-        });
-      });
+      }
+    };
+    
+    if (sessionStarted && room.state === 'disconnected') {
+      attemptConnection();
     }
+    
     return () => {
       aborted = true;
       room.disconnect();
@@ -79,16 +127,8 @@ export function App({ appConfig }: AppProps) {
 
   return (
     <main>
-      <MotionWelcome
-        key="welcome"
-        startButtonText={startButtonText}
-        onStartCall={() => setSessionStarted(true)}
-        disabled={sessionStarted}
-        initial={{ opacity: 1 }}
-        animate={{ opacity: sessionStarted ? 0 : 1 }}
-        transition={{ duration: 0.5, ease: 'linear', delay: sessionStarted ? 0 : 0.5 }}
-      />
-
+      {/* Welcome screen hidden - auto-connect enabled */}
+      
       <RoomContext.Provider value={room}>
         <RoomAudioRenderer />
         <StartAudio label="Start Audio" />
@@ -98,13 +138,9 @@ export function App({ appConfig }: AppProps) {
           appConfig={appConfig}
           disabled={!sessionStarted}
           sessionStarted={sessionStarted}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: sessionStarted ? 1 : 0 }}
-          transition={{
-            duration: 0.5,
-            ease: 'linear',
-            delay: sessionStarted ? 0.5 : 0,
-          }}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0 }}
         />
       </RoomContext.Provider>
 

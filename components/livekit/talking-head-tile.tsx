@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useTalkingHead } from '@/hooks/useTalkingHead';
 import { useTalkingHeadTranscription } from '@/hooks/useTalkingHeadTranscription';
 import { applyHolographicMaterial, disableHolographicEffect, updateHolographicColor } from '@/lib/holographic-material';
-import { detectDeviceCapabilities, getHolographicSettings } from '@/lib/performance-utils';
+import { getQualitySettings, type QualityLevel } from '@/lib/quality-settings';
 import { cn } from '@/lib/utils';
 
 interface TalkingHeadTileProps {
@@ -25,11 +25,11 @@ export function TalkingHeadTile({
   onHeadReady,
 }: TalkingHeadTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isHolographic, setIsHolographic] = useState(true); // START WITH HOLOGRAPHIC ENABLED
+  const [isHolographic, setIsHolographic] = useState(false); // START IN NORMAL MODE (not holographic)
   const [holographicColor, setHolographicColor] = useState('#70c1ff');
   const [isToggling, setIsToggling] = useState(false);
 
-  const { head, isLoading, isAvatarLoaded, error, loadAvatar } = useTalkingHead(containerRef, {
+  const { head, isLoading, isAvatarLoaded, error, loadAvatar, adjustLighting } = useTalkingHead(containerRef, {
     lipsyncModules: ['en'],
     cameraView: 'full', // Start with full view
   });
@@ -37,7 +37,7 @@ export function TalkingHeadTile({
   // Integrate with LiveKit transcriptions for lip-sync
   useTalkingHeadTranscription({ head, enabled: isAvatarLoaded });
 
-  // Holographic toggle handler with performance optimization
+  // Holographic toggle handler with quality-based optimization
   const handleHolographicToggle = useCallback(async () => {
     if (!head || !isAvatarLoaded || isToggling) return;
     
@@ -46,22 +46,25 @@ export function TalkingHeadTile({
     
     try {
       if (!isHolographic) {
-        // Get performance-optimized settings
-        const capabilities = detectDeviceCapabilities();
-        const perfSettings = getHolographicSettings(capabilities);
+        // Get quality-based settings
+        const qualitySettings = getQualitySettings();
+        const { holographic } = qualitySettings;
         
-        console.log('📱 Device performance settings:', perfSettings);
+        console.log('📱 Quality settings:', qualitySettings);
         
-        // Enable holographic with optimized settings
+        // Enable holographic with quality-optimized settings
         applyHolographicMaterial(head, {
           color: holographicColor,
           enabled: true,
           excludeMeshNames: [],
           excludeMaterialNames: ['mask', 'eyes', 'teeth'],
-          faceIntensity: perfSettings.faceIntensity,
-          bodyIntensity: perfSettings.bodyIntensity,
+          faceIntensity: holographic.faceIntensity,
+          bodyIntensity: holographic.bodyIntensity,
           upperThreshold: 1.3,
           lowerThreshold: 0.3,
+          glitchIntensity: holographic.enableGlitch ? holographic.glitchIntensity : 0,
+          glitchFrequency: holographic.glitchFrequency,
+          stripeCount: holographic.stripeCount,
         });
         setIsHolographic(true);
       } else {
@@ -85,20 +88,34 @@ export function TalkingHeadTile({
     updateHolographicColor(head, newColor);
   }, [head, isAvatarLoaded, isHolographic]);
 
-  // Expose holographic controls globally
+  // Expose holographic and lighting controls globally
   React.useEffect(() => {
     if (head && isAvatarLoaded) {
-      (window as any).talkingHeadHolographicControls = {
-        toggle: handleHolographicToggle,
-        setColor: handleHolographicColorChange,
-        isEnabled: isHolographic,
-        color: holographicColor,
-        isToggling,
+      (window as any).talkingHeadControls = {
+        holographic: {
+          toggle: handleHolographicToggle,
+          setColor: handleHolographicColorChange,
+          isEnabled: isHolographic,
+          color: holographicColor,
+          isToggling,
+        },
+        lighting: {
+          adjust: (options: {
+            directionalIntensity?: number;
+            ambientIntensity?: number;
+            pointIntensity?: number;
+            exposure?: number;
+          }) => {
+            if (adjustLighting) {
+              adjustLighting(options);
+            }
+          },
+        },
       };
       
-      console.log('🌐 Holographic controls exposed globally');
+      console.log('🌐 Holographic and lighting controls exposed globally');
     }
-  }, [head, isAvatarLoaded, handleHolographicToggle, handleHolographicColorChange, isHolographic, holographicColor, isToggling]);
+  }, [head, isAvatarLoaded, handleHolographicToggle, handleHolographicColorChange, isHolographic, holographicColor, isToggling, adjustLighting]);
 
   // Notify parent when head instance is ready
   React.useEffect(() => {
@@ -145,11 +162,11 @@ export function TalkingHeadTile({
     });
   }, [head, isAvatarLoaded, avatarUrl, loadAvatar]);
 
-  // Auto-apply holographic effect when avatar loads
+  // DON'T auto-apply holographic - start in NORMAL mode
   React.useEffect(() => {
-    if (head && isAvatarLoaded && isHolographic && !isToggling) {
-      console.log('🎬 Auto-applying holographic effect on avatar load');
-      handleHolographicToggle();
+    if (head && isAvatarLoaded) {
+      console.log('✅ Avatar loaded in NORMAL mode (holographic disabled)');
+      // User can manually enable holographic via the toggle button
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAvatarLoaded]);

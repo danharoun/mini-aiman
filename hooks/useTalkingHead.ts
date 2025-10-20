@@ -10,8 +10,8 @@ import {
 import {
   detectDeviceCapabilities,
   optimizeTalkingHead,
-  getHolographicSettings,
 } from '@/lib/performance-utils';
+import { getQualitySettings } from '@/lib/quality-settings';
 
 // TalkingHead types
 export interface TalkingHeadOptions {
@@ -141,9 +141,10 @@ export function useTalkingHead(
 
         const instance = new TalkingHead(containerRef.current, defaultOptions);
         
-        // Apply performance optimizations for mobile
+        // Apply performance optimizations using quality settings
         const capabilities = detectDeviceCapabilities();
-        optimizeTalkingHead(instance, capabilities);
+        const qualitySettings = getQualitySettings();
+        optimizeTalkingHead(instance, capabilities, qualitySettings);
         
         setHead(instance);
       } catch (err) {
@@ -185,6 +186,11 @@ export function useTalkingHead(
 
         // Enhance gestures for 4-bone fingers (Aiman avatar)
         enhanceGesturesForAvatar(head);
+
+        // Reduce scene lighting intensity for softer look (with delay to ensure nodeAvatar is ready)
+        setTimeout(() => {
+          reduceLightIntensity(head);
+        }, 500);
 
         // Apply holographic effect if enabled
         if (holographicOptionsRef.current?.enabled) {
@@ -231,7 +237,105 @@ export function useTalkingHead(
     error,
     loadAvatar,
     setHolographic,
+    adjustLighting: (options: {
+      directionalIntensity?: number;
+      ambientIntensity?: number;
+      pointIntensity?: number;
+      exposure?: number;
+    }) => {
+      if (head) {
+        adjustSceneLighting(head, options);
+      }
+    },
   };
+}
+
+// Adjust scene lighting with custom parameters
+function adjustSceneLighting(
+  head: TalkingHeadInstance,
+  options: {
+    directionalIntensity?: number;
+    ambientIntensity?: number;
+    pointIntensity?: number;
+    exposure?: number;
+  } = {}
+) {
+  try {
+    // Default values (very dim as before)
+    const {
+      directionalIntensity = 0.25,
+      ambientIntensity = 0.35,
+      pointIntensity = 0.25,
+      exposure = 0.5,
+    } = options;
+
+    // Try multiple ways to access the scene
+    let scene = null;
+    
+    if (head.nodeAvatar && head.nodeAvatar.parent) {
+      scene = head.nodeAvatar.parent;
+    } else if (head.armature && head.armature.parent) {
+      scene = head.armature.parent;
+    } else if (head.renderer && head.renderer.domElement) {
+      console.log('🔍 Trying to find scene from renderer...');
+      return; // Skip for now if nodeAvatar not ready
+    }
+    
+    if (!scene) {
+      console.warn('⚠️ Cannot adjust lighting: scene not found');
+      return;
+    }
+
+    console.log('🔍 Scene found, adjusting lights...');
+    
+    // Store original intensities if not already stored
+    if (!(head as any)._originalLightIntensities) {
+      (head as any)._originalLightIntensities = new Map();
+    }
+    
+    // Traverse scene to find and adjust lights
+    scene.traverse((child: any) => {
+      if (child.isLight) {
+        // Store original intensity if not stored
+        if (!(head as any)._originalLightIntensities.has(child.uuid)) {
+          (head as any)._originalLightIntensities.set(child.uuid, child.intensity);
+        }
+        
+        const originalIntensity = (head as any)._originalLightIntensities.get(child.uuid);
+        
+        // Apply intensity multiplier based on light type
+        if (child.type === 'DirectionalLight') {
+          child.intensity = originalIntensity * directionalIntensity;
+        } else if (child.type === 'AmbientLight') {
+          child.intensity = originalIntensity * ambientIntensity;
+        } else if (child.type === 'PointLight' || child.type === 'SpotLight') {
+          child.intensity = originalIntensity * pointIntensity;
+        }
+        
+        console.log(`💡 ${child.type}: ${child.intensity.toFixed(2)}`);
+      }
+    });
+    
+    // Adjust renderer exposure
+    if (head.renderer) {
+      head.renderer.toneMappingExposure = exposure;
+      console.log(`🎬 Renderer exposure: ${exposure}`);
+    }
+    
+    console.log('🌙 Scene lighting adjusted');
+  } catch (error) {
+    console.error('❌ Error adjusting light intensity:', error);
+  }
+}
+
+// Reduce scene light intensity for softer look (legacy function)
+function reduceLightIntensity(head: TalkingHeadInstance) {
+  adjustSceneLighting(head, {
+    directionalIntensity: 0.25,
+    ambientIntensity: 0.35,
+    pointIntensity: 0.25,
+    exposure: 0.5,
+  });
 }
 
 // Enhance gestures for avatars with 4 finger bones

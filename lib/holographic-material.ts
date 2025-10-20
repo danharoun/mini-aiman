@@ -103,6 +103,10 @@ export interface HolographicOptions {
   bodyIntensity?: number;  // 0.0 to 1.0, default 1.0 (100% effect on body)
   upperThreshold?: number; // Y position for face/hair, default 1.3
   lowerThreshold?: number; // Y position for body, default 0.3
+  // Glitch effect control
+  glitchIntensity?: number; // 0.0-1.0, default 1.0 (full glitch), 0 = disabled
+  glitchFrequency?: number; // 0.0-2.0, default 1.0 (normal speed)
+  stripeCount?: number; // 10-30, default 20
 }
 
 /**
@@ -139,7 +143,10 @@ export function applyHolographicMaterial(
     faceIntensity = 0.2,
     bodyIntensity = 1.0,
     upperThreshold = 1.3,
-    lowerThreshold = 0.3
+    lowerThreshold = 0.3,
+    glitchIntensity = 1.0,
+    glitchFrequency = 1.0,
+    stripeCount = 20
   } = options;
 
   if (!enabled) {
@@ -224,11 +231,11 @@ export function applyHolographicMaterial(
         });
       }
 
-      // Setup material properties for holographic effect
+      // Setup material properties for holographic effect (optimized for performance)
       mat.transparent = true;
-      mat.side = THREE.DoubleSide;
-      mat.depthWrite = false;
-      mat.blending = THREE.AdditiveBlending;
+      mat.side = THREE.FrontSide; // Changed from DoubleSide (50% less rendering)
+      mat.depthWrite = true; // Changed to true for better performance
+      mat.blending = THREE.NormalBlending; // Changed from AdditiveBlending (faster)
 
       // CRITICAL: Force Three.js to recognize this as a different material
       // by setting a custom cache key that includes our holographic flag
@@ -249,39 +256,34 @@ export function applyHolographicMaterial(
         shader.uniforms.uBodyIntensity = baseHolographicMaterial.uniforms.uBodyIntensity;
         shader.uniforms.uUpperThreshold = baseHolographicMaterial.uniforms.uUpperThreshold;
         shader.uniforms.uLowerThreshold = baseHolographicMaterial.uniforms.uLowerThreshold;
+        shader.uniforms.uGlitchIntensity = new THREE.Uniform(glitchIntensity);
+        shader.uniforms.uGlitchFrequency = new THREE.Uniform(glitchFrequency);
+        shader.uniforms.uStripeCount = new THREE.Uniform(stripeCount);
 
         // Add uniform declarations to vertex shader
         shader.vertexShader = 'uniform float uTime;\n' + shader.vertexShader;
+        shader.vertexShader = 'uniform float uGlitchIntensity;\n' + shader.vertexShader;
+        shader.vertexShader = 'uniform float uGlitchFrequency;\n' + shader.vertexShader;
         shader.vertexShader = 'varying vec3 vWorldPosition;\n' + shader.vertexShader;
 
-        // Modify vertex shader - add glitch effect (static on face, moving on body)
+        // Modify vertex shader - add glitch effect (ultra-optimized)
         shader.vertexShader = shader.vertexShader.replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
           
-          // HEIGHT-BASED GLITCH: Static on face, animated on body
-          // Face glitch (upper) - static pattern based on position only
-          float faceGlitchX = fract(sin(dot(transformed.xz, vec2(12.9898,78.233))) * 43758.5453123);
-          float faceGlitchZ = fract(sin(dot(transformed.zx, vec2(78.233,12.9898))) * 43758.5453123);
-          float faceGlitchStrength = (faceGlitchX + faceGlitchZ) * 0.5;
-          faceGlitchStrength = smoothstep(0.3, 1.0, faceGlitchStrength) * 0.15;
-          
-          // Body glitch (lower) - animated moving pattern
-          float glitchTime = uTime - transformed.y;
-          float bodyGlitchStrength = sin(glitchTime) + sin(glitchTime * 3.45) + sin(glitchTime * 8.76);
-          bodyGlitchStrength /= 3.0;
-          bodyGlitchStrength = smoothstep(0.3, 1.0, bodyGlitchStrength);
-          bodyGlitchStrength *= 0.25;
-          
-          float random2D_x = fract(sin(dot(transformed.xz + uTime, vec2(12.9898,78.233))) * 43758.5453123);
-          float random2D_z = fract(sin(dot(transformed.zx + uTime, vec2(12.9898,78.233))) * 43758.5453123);
-          
-          // Mix glitch based on height (face vs body)
-          float glitchHeightMix = smoothstep(1.3, 0.3, transformed.y); // 0 = face, 1 = body
-          float finalGlitchStrength = mix(faceGlitchStrength, bodyGlitchStrength, glitchHeightMix);
-          
-          transformed.x += (random2D_x - 0.5) * finalGlitchStrength;
-          transformed.z += (random2D_z - 0.5) * finalGlitchStrength;
+          // Simplified glitch (only if intensity > 0.05)
+          if (uGlitchIntensity > 0.05) {
+            // Simple animated glitch (one sine wave)
+            float glitchTime = (uTime * uGlitchFrequency) - transformed.y;
+            float glitchStrength = sin(glitchTime * 3.0) * 0.08 * uGlitchIntensity;
+            
+            // Simple random offset (one calculation)
+            float random = fract(sin(dot(transformed.xz + uTime, vec2(12.9898, 78.233))) * 43758.5453);
+            
+            // Apply to x and z (minimal displacement)
+            transformed.x += (random - 0.5) * glitchStrength;
+            transformed.z += (random - 0.5) * glitchStrength * 0.5;
+          }
           `
         );
 
@@ -300,36 +302,28 @@ export function applyHolographicMaterial(
         shader.fragmentShader = 'uniform float uBodyIntensity;\n' + shader.fragmentShader;
         shader.fragmentShader = 'uniform float uUpperThreshold;\n' + shader.fragmentShader;
         shader.fragmentShader = 'uniform float uLowerThreshold;\n' + shader.fragmentShader;
+        shader.fragmentShader = 'uniform float uStripeCount;\n' + shader.fragmentShader;
         shader.fragmentShader = 'varying vec3 vWorldPosition;\n' + shader.fragmentShader;
         
-        // Modify fragment shader - add holographic effect
+        // Modify fragment shader - add holographic effect (ultra-optimized)
         shader.fragmentShader = shader.fragmentShader.replace(
           'vec4 diffuseColor = vec4( diffuse, opacity );',
           `
-          // Holographic stripes
-          float stripes = mod((vWorldPosition.y - uTime * 0.02) * 20.0, 1.0);
-          stripes = pow(stripes, 3.0);
+          // Ultra-optimized holographic effect
+          float stripes = fract((vWorldPosition.y - uTime * 0.02) * uStripeCount);
+          stripes = stripes * stripes; // Squared instead of cubed (faster)
           
-          // Fresnel effect
-          vec3 viewDirection = normalize(vWorldPosition - cameraPosition);
-          vec3 worldNormal = normalize(vNormal);
-          if (!gl_FrontFacing) worldNormal *= -1.0;
-          float fresnel = dot(viewDirection, worldNormal) + 1.0;
-          fresnel = pow(fresnel, 2.0);
+          // Simplified Fresnel (no normalize needed - approximation)
+          vec3 viewDir = vWorldPosition - cameraPosition;
+          float fresnel = dot(viewDir, vNormal);
+          fresnel = fresnel * fresnel; // Squared
           
-          // Falloff
-          float falloff = smoothstep(0.8, 0.0, fresnel);
+          // Simple height gradient (no smoothstep)
+          float heightFade = clamp((vWorldPosition.y - uLowerThreshold) / (uUpperThreshold - uLowerThreshold), 0.0, 1.0);
+          float intensity = uFaceIntensity + (uBodyIntensity - uFaceIntensity) * heightFade;
           
-          // HEIGHT-BASED INTENSITY GRADIENT
-          // Face/hair (upper) = less holographic, body (lower) = more holographic
-          float heightFade = smoothstep(uUpperThreshold, uLowerThreshold, vWorldPosition.y);
-          float intensityMultiplier = mix(uFaceIntensity, uBodyIntensity, heightFade);
-          
-          // Holographic combination
-          float holographic = stripes * fresnel;
-          holographic += fresnel * 1.25;
-          holographic *= falloff;
-          holographic *= intensityMultiplier;  // Apply height gradient
+          // Simplified holographic (one operation)
+          float holographic = (stripes + fresnel) * intensity * 0.5;
           
           vec4 diffuseColor = vec4(uColor, holographic);
           `
@@ -453,12 +447,10 @@ function setupAnimationLoop(head: any): void {
         }
       });
       
-      // Debug log every 60 frames (once per second at 60fps)
-      if (Math.floor(elapsedTime * 60) % 60 === 0) {
+      // Debug log every 5 seconds (reduced logging overhead)
+      if (Math.floor(elapsedTime) % 5 === 0 && Math.floor(elapsedTime * 10) % 10 === 0) {
         if (notCompiledCount > 0) {
-          console.log(`🎬 Holographic animation: ${updatedCount}/${materials.length} materials updated, ${notCompiledCount} waiting for shader compilation (time: ${elapsedTime.toFixed(2)}s)`);
-        } else {
-          console.log(`🎬 Holographic animation running (${updatedCount}/${materials.length} materials, time: ${elapsedTime.toFixed(2)}s)`);
+          console.log(`🎬 Holographic: ${updatedCount}/${materials.length} materials (${notCompiledCount} compiling)`);
         }
       }
     }

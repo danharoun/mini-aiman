@@ -175,3 +175,6 @@ The app now logs device capabilities:
 **Tested On**: Android 11-14, Chrome 120+
 
 
+
+
+

@@ -70,13 +70,13 @@ export function getRendererSettings(capabilities: DeviceCapabilities) {
 /**
  * Apply performance optimizations to TalkingHead instance
  */
-export function optimizeTalkingHead(head: any, capabilities: DeviceCapabilities) {
+export function optimizeTalkingHead(head: any, capabilities: DeviceCapabilities, qualitySettings?: any) {
   if (!head || !head.renderer) return;
   
   console.log('📱 Device capabilities:', capabilities);
   
   try {
-    const settings = getRendererSettings(capabilities);
+    const settings = qualitySettings || getRendererSettings(capabilities);
     
     // Set pixel ratio (lower = better performance)
     if (head.renderer.setPixelRatio) {
@@ -90,11 +90,11 @@ export function optimizeTalkingHead(head: any, capabilities: DeviceCapabilities)
       console.log('✅ Shadows disabled');
     }
     
-    // Reduce render resolution on low-end devices
-    if (capabilities.isLowEnd && head.renderer.domElement) {
+    // Reduce render resolution for ultra-low devices
+    if (settings.pixelRatio < 1.0 && head.renderer.domElement) {
       const canvas = head.renderer.domElement;
-      const width = Math.floor(canvas.width * 0.75);
-      const height = Math.floor(canvas.height * 0.75);
+      const width = Math.floor(canvas.width * settings.pixelRatio);
+      const height = Math.floor(canvas.height * settings.pixelRatio);
       head.renderer.setSize(width, height, false);
       console.log(`✅ Render resolution reduced to: ${width}x${height}`);
     }
@@ -178,5 +178,4 @@ export function createThrottledAnimationFrame(fps: number = 30) {
     });
   };
 }
-
 
