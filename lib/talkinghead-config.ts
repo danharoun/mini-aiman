@@ -140,3 +140,7 @@ export function getAnimationConfig(overrides?: Partial<typeof TALKINGHEAD_CONFIG
 
 
 
+
+
+
+
