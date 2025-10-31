@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import type { TalkingHeadInstance } from '@/hooks/useTalkingHead';
 import {
   applyHolographicMaterial,
@@ -439,4 +439,3 @@ function Button({ onClick, active, fullWidth, className = '', children }: Button
     </button>
   );
 }
-

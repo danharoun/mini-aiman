@@ -73,6 +73,24 @@ And open http://localhost:3000 in your browser.
 
 You'll also need an agent to speak with. Try our starter agent for [Python](https://github.com/livekit-examples/agent-starter-python), [Node.js](https://github.com/livekit-examples/agent-starter-node), or [create your own from scratch](https://docs.livekit.io/agents/start/voice-ai/).
 
+## Python backend (Mini AiMan)
+
+This repo now includes a ready-to-run Python worker under [`python_backend`](./python_backend).
+It registers a `mini-aiman-python` LiveKit agent that uses inexpensive OpenAI models
+(`gpt-4o-mini` family) for transcription, reasoning, and speech synthesis. To use it:
+
+1. `cd python_backend && uv venv && source .venv/bin/activate`
+2. `uv sync`
+3. Copy `.env.example` to `.env` and fill in LiveKit + OpenAI keys
+4. `uv run mini-aiman-agent`
+
+The Next.js client automatically requests this agent name when fetching connection
+details (override with `NEXT_PUBLIC_LIVEKIT_AGENT_NAME` if desired). The worker listens
+continuously but only responds after hearing the trigger phrases defined in
+`TRIGGER_PHRASES` (default: “hey aiman”), and the LLM can call the
+`play_avatar_animation` tool to trigger `ok`, `high_five`, `hands_back`, or `wave`
+gestures on the holographic avatar.
+
 ## Configuration
 
 This starter is designed to be flexible so you can adapt it to your specific agent use case. You can easily configure it to work with different types of inputs and outputs:

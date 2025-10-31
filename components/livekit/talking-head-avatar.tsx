@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTalkingHead, type AvatarOptions } from '@/hooks/useTalkingHead';
+import { useAvatarAnimationCommands } from '@/hooks/useAvatarAnimationCommands';
 import { cn } from '@/lib/utils';
 
 interface TalkingHeadAvatarProps {
@@ -47,6 +48,8 @@ export function TalkingHeadAvatar({
   const [isHolographic, setIsHolographic] = useState(holographic?.enabled || false);
   const [holographicColor, setHolographicColor] = useState(holographic?.color || '#70c1ff');
   const [isTogglingHolographic, setIsTogglingHolographic] = useState(false);
+
+  useAvatarAnimationCommands(head, Boolean(isAvatarLoaded));
 
   // Load avatar when head instance is ready
   useEffect(() => {
@@ -303,4 +306,3 @@ export function TalkingHeadAvatar({
     </div>
   );
 }
-
