@@ -1,5 +1,5 @@
 // Service Worker for PWA
-const CACHE_NAME = 'ai-assistant-v3'; // Updated cache version (fixed icon paths)
+const CACHE_NAME = 'ai-assistant-v4'; // Updated cache version (fixed chrome-extension protocol)
 const urlsToCache = [
   '/',
   '/aiman.glb',
@@ -32,6 +32,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only handle HTTP/HTTPS requests (skip chrome-extension://, blob:, data:, etc.)
+  const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Only cache GET requests (POST, PUT, DELETE cannot be cached)
   if (event.request.method !== 'GET') {
     return;

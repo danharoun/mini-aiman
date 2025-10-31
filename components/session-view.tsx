@@ -444,6 +444,7 @@ export const SessionView = ({
                           head={headInstance} 
                           isOpen={animControlsOpen}
                           onToggle={() => setAnimControlsOpen(!animControlsOpen)}
+                          embedded={true}
                         />
                       </div>
                     )}
