@@ -117,7 +117,7 @@ You can update these values in [`app-config.ts`](./app-config.ts) to customize b
 
 #### Environment Variables
 
-You'll also need to configure your LiveKit credentials in `.env.local` (copy `.env.example` if you don't have one):
+You'll also need to configure your LiveKit credentials in `.env` (copy `.env.example` if you don't have one). Duplicate the file to `.env.local` only if you run Next.js outside Docker and want the same values.
 
 ```env
 LIVEKIT_API_KEY=your_livekit_api_key
@@ -126,6 +126,24 @@ LIVEKIT_URL=https://your-livekit-server-url
 ```
 
 These are required for the voice agent functionality to work with your LiveKit project.
+
+### Docker Compose dev stack
+
+First, copy the example environment and fill in your LiveKit credentials:
+
+```bash
+cp .env.example .env
+cp .env.example .env.local      # optional, for direct Next.js usage
+```
+
+Then a single command starts both the Next.js frontend and the Python agent inside containers:
+
+```bash
+docker compose up --build
+```
+
+The frontend runs on http://localhost:3000 and the backend worker logs appear in the `backend` service.
+Stop everything with `docker compose down`.
 
 ## 📱 Mobile/Android Optimization
 

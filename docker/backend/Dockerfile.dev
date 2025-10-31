@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+ENV UV_VERSION=0.4.20 \
+    PYTHONUNBUFFERED=1 \
+    PIP_ROOT_USER_ACTION=ignore
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl git \
+    && pip install --no-cache-dir "uv==${UV_VERSION}" \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+EXPOSE 8080
+
+# Keep the container alive for interactive uv commands by default.
+CMD ["bash"]

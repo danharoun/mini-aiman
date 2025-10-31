@@ -1,0 +1,9 @@
+FROM node:20-bullseye
+
+# Use pnpm in the container so commands mirror local development.
+RUN corepack enable pnpm
+
+WORKDIR /workspace
+
+# Default command can be overridden by docker-compose.
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
