@@ -12,6 +12,7 @@ interface AvatarAnimationControlsProps {
   head: TalkingHeadInstance | null;
   isOpen: boolean;
   onToggle: () => void;
+  embedded?: boolean; // If true, only render content (no toggle button, no sliding panel)
 }
 
 type ViewType = 'full' | 'mid' | 'upper' | 'head';
@@ -19,7 +20,7 @@ type MoodType = 'neutral' | 'happy' | 'sad' | 'angry' | 'fear' | 'love' | 'disgu
 type PoseType = 'straight' | 'side' | 'hip' | 'wide';
 type GestureType = 'handup' | 'index' | 'ok' | 'thumbup' | 'thumbdown' | 'side' | 'shrug';
 
-export function AvatarAnimationControls({ head, isOpen, onToggle }: AvatarAnimationControlsProps) {
+export function AvatarAnimationControls({ head, isOpen, onToggle, embedded = false }: AvatarAnimationControlsProps) {
   const [currentView, setCurrentView] = useState<ViewType>('full');
   const [currentMood, setCurrentMood] = useState<MoodType>('neutral');
   const [speechText, setSpeechText] = useState('Hello! I am testing lip synchronization with the avatar.');
@@ -211,6 +212,169 @@ export function AvatarAnimationControls({ head, isOpen, onToggle }: AvatarAnimat
     error: 'border-red-500 bg-red-950/30',
   };
 
+  // Render the controls content
+  const controlsContent = (
+    <>
+      {/* Status */}
+      <div className={`p-3 rounded border-l-4 text-sm mb-4 ${statusColors[status.type]}`}>
+        {status.message}
+      </div>
+
+      {/* Camera View */}
+      <Section title="📷 Camera View">
+        <ButtonGrid>
+          <Button onClick={() => changeView('full')} active={currentView === 'full'}>
+            Full Body
+          </Button>
+          <Button onClick={() => changeView('mid')} active={currentView === 'mid'}>
+            Mid Body
+          </Button>
+          <Button onClick={() => changeView('upper')} active={currentView === 'upper'}>
+            Upper Body
+          </Button>
+          <Button onClick={() => changeView('head')} active={currentView === 'head'}>
+            Head Only
+          </Button>
+        </ButtonGrid>
+      </Section>
+
+      {/* Mood */}
+      <Section title="😊 Mood">
+        <ButtonGrid>
+          {(['neutral', 'happy', 'sad', 'angry', 'fear', 'love'] as MoodType[]).map(mood => (
+            <Button
+              key={mood}
+              onClick={() => changeMood(mood)}
+              active={currentMood === mood}
+            >
+              {mood.charAt(0).toUpperCase() + mood.slice(1)}
+            </Button>
+          ))}
+        </ButtonGrid>
+      </Section>
+
+      {/* Poses */}
+      <Section title="🧍 Body Pose">
+        <ButtonGrid>
+          {(['straight', 'side', 'hip', 'wide'] as PoseType[]).map(pose => (
+            <Button key={pose} onClick={() => playPose(pose)}>
+              {pose.charAt(0).toUpperCase() + pose.slice(1)}
+            </Button>
+          ))}
+        </ButtonGrid>
+        <Button onClick={stopPose} fullWidth className="mt-2">
+          Stop Pose
+        </Button>
+      </Section>
+
+      {/* Gestures */}
+      <Section title="👋 Hand Gestures">
+        <ButtonGrid>
+          {(['handup', 'index', 'ok', 'thumbup', 'thumbdown', 'shrug'] as GestureType[]).map(gesture => (
+            <Button key={gesture} onClick={() => playGesture(gesture)}>
+              {gesture === 'thumbup' ? 'Thumbs Up' :
+               gesture === 'thumbdown' ? 'Thumbs Down' :
+               gesture === 'handup' ? 'Hand Up' :
+               gesture.charAt(0).toUpperCase() + gesture.slice(1)}
+            </Button>
+          ))}
+        </ButtonGrid>
+        <Button onClick={stopGesture} fullWidth className="mt-2">
+          Stop Gesture
+        </Button>
+      </Section>
+
+      {/* Look Direction */}
+      <Section title="👁️ Look Direction">
+        <ButtonGrid>
+          <Button onClick={lookAtCamera}>At Camera</Button>
+          <Button onClick={lookAhead}>Ahead</Button>
+          <Button onClick={makeEyeContact}>Eye Contact</Button>
+        </ButtonGrid>
+      </Section>
+
+      {/* Speech */}
+      <Section title="🗣️ Text-to-Speech">
+        <p className="text-xs text-gray-400 italic mb-2">
+          Type text and click Speak to test lip sync
+        </p>
+        <textarea
+          value={speechText}
+          onChange={(e) => setSpeechText(e.target.value)}
+          className="w-full bg-gray-800 text-white border border-gray-600 rounded p-2 text-sm mb-2 min-h-[80px] resize-vertical"
+          placeholder="Enter text to speak..."
+        />
+        <Button onClick={speakText} fullWidth>
+          Speak
+        </Button>
+      </Section>
+
+      {/* External Animation */}
+      <Section title="🎬 External Animation">
+        <p className="text-xs text-gray-400 italic mb-2">
+          Load FBX animation files (Mixamo)
+        </p>
+        <input
+          type="text"
+          value={animationUrl}
+          onChange={(e) => setAnimationUrl(e.target.value)}
+          className="w-full bg-gray-800 text-white border border-gray-600 rounded p-2 text-sm mb-2"
+          placeholder="./animations/walking.fbx"
+        />
+        <div className="space-y-2">
+          <Button onClick={playAnimation} fullWidth>
+            Play Animation
+          </Button>
+          <Button onClick={stopAnimation} fullWidth>
+            Stop Animation
+          </Button>
+        </div>
+      </Section>
+
+      {/* Holographic Effect */}
+      <Section title="✨ Holographic Effect">
+        <Button 
+          onClick={toggleHolographic} 
+          fullWidth
+          active={isHolographic}
+        >
+          {isHolographic ? '✨ Holographic ON' : 'Holographic OFF'}
+        </Button>
+        {isHolographic && (
+          <div className="mt-3 bg-gray-800 border border-gray-600 rounded p-3">
+            <label className="text-xs text-gray-400 block mb-2">Color:</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={holographicColor}
+                onChange={(e) => changeHolographicColor(e.target.value)}
+                className="h-10 w-full cursor-pointer rounded border border-gray-600 bg-gray-700"
+              />
+              <span className="text-xs text-gray-400 min-w-[70px]">{holographicColor}</span>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      {/* Combo Demo */}
+      <Section title="🎭 Combo Demo">
+        <Button onClick={playComboDemo} fullWidth>
+          Play Demo Sequence
+        </Button>
+      </Section>
+    </>
+  );
+
+  // EMBEDDED MODE: Just render the content in a simple container
+  if (embedded) {
+    return (
+      <div className="space-y-3">
+        {controlsContent}
+      </div>
+    );
+  }
+
+  // STANDALONE MODE: Render with toggle button and sliding panel
   return (
     <>
       {/* Toggle Button */}
@@ -242,154 +406,7 @@ export function AvatarAnimationControls({ head, isOpen, onToggle }: AvatarAnimat
               <h2 className="text-xl font-bold text-blue-400 border-b-2 border-blue-400 pb-3 mb-4">
                 🎮 Animation Controls
               </h2>
-
-              {/* Status */}
-              <div className={`p-3 rounded border-l-4 text-sm mb-6 ${statusColors[status.type]}`}>
-                {status.message}
-              </div>
-
-              {/* Camera View */}
-              <Section title="📷 Camera View">
-                <ButtonGrid>
-                  <Button onClick={() => changeView('full')} active={currentView === 'full'}>
-                    Full Body
-                  </Button>
-                  <Button onClick={() => changeView('mid')} active={currentView === 'mid'}>
-                    Mid Body
-                  </Button>
-                  <Button onClick={() => changeView('upper')} active={currentView === 'upper'}>
-                    Upper Body
-                  </Button>
-                  <Button onClick={() => changeView('head')} active={currentView === 'head'}>
-                    Head Only
-                  </Button>
-                </ButtonGrid>
-              </Section>
-
-              {/* Mood */}
-              <Section title="😊 Mood">
-                <ButtonGrid>
-                  {(['neutral', 'happy', 'sad', 'angry', 'fear', 'love'] as MoodType[]).map(mood => (
-                    <Button
-                      key={mood}
-                      onClick={() => changeMood(mood)}
-                      active={currentMood === mood}
-                    >
-                      {mood.charAt(0).toUpperCase() + mood.slice(1)}
-                    </Button>
-                  ))}
-                </ButtonGrid>
-              </Section>
-
-              {/* Poses */}
-              <Section title="🧍 Body Pose">
-                <ButtonGrid>
-                  {(['straight', 'side', 'hip', 'wide'] as PoseType[]).map(pose => (
-                    <Button key={pose} onClick={() => playPose(pose)}>
-                      {pose.charAt(0).toUpperCase() + pose.slice(1)}
-                    </Button>
-                  ))}
-                </ButtonGrid>
-                <Button onClick={stopPose} fullWidth className="mt-2">
-                  Stop Pose
-                </Button>
-              </Section>
-
-              {/* Gestures */}
-              <Section title="👋 Hand Gestures">
-                <ButtonGrid>
-                  {(['handup', 'index', 'ok', 'thumbup', 'thumbdown', 'shrug'] as GestureType[]).map(gesture => (
-                    <Button key={gesture} onClick={() => playGesture(gesture)}>
-                      {gesture === 'thumbup' ? 'Thumbs Up' :
-                       gesture === 'thumbdown' ? 'Thumbs Down' :
-                       gesture === 'handup' ? 'Hand Up' :
-                       gesture.charAt(0).toUpperCase() + gesture.slice(1)}
-                    </Button>
-                  ))}
-                </ButtonGrid>
-                <Button onClick={stopGesture} fullWidth className="mt-2">
-                  Stop Gesture
-                </Button>
-              </Section>
-
-              {/* Look Direction */}
-              <Section title="👁️ Look Direction">
-                <ButtonGrid>
-                  <Button onClick={lookAtCamera}>At Camera</Button>
-                  <Button onClick={lookAhead}>Ahead</Button>
-                  <Button onClick={makeEyeContact}>Eye Contact</Button>
-                </ButtonGrid>
-              </Section>
-
-              {/* Speech */}
-              <Section title="🗣️ Text-to-Speech">
-                <p className="text-xs text-gray-400 italic mb-2">
-                  Type text and click Speak to test lip sync
-                </p>
-                <textarea
-                  value={speechText}
-                  onChange={(e) => setSpeechText(e.target.value)}
-                  className="w-full bg-gray-800 text-white border border-gray-600 rounded p-2 text-sm mb-2 min-h-[80px] resize-vertical"
-                  placeholder="Enter text to speak..."
-                />
-                <Button onClick={speakText} fullWidth>
-                  Speak
-                </Button>
-              </Section>
-
-              {/* External Animation */}
-              <Section title="🎬 External Animation">
-                <p className="text-xs text-gray-400 italic mb-2">
-                  Load FBX animation files (Mixamo)
-                </p>
-                <input
-                  type="text"
-                  value={animationUrl}
-                  onChange={(e) => setAnimationUrl(e.target.value)}
-                  className="w-full bg-gray-800 text-white border border-gray-600 rounded p-2 text-sm mb-2"
-                  placeholder="./animations/walking.fbx"
-                />
-                <div className="space-y-2">
-                  <Button onClick={playAnimation} fullWidth>
-                    Play Animation
-                  </Button>
-                  <Button onClick={stopAnimation} fullWidth>
-                    Stop Animation
-                  </Button>
-                </div>
-              </Section>
-
-              {/* Holographic Effect */}
-              <Section title="✨ Holographic Effect">
-                <Button 
-                  onClick={toggleHolographic} 
-                  fullWidth
-                  active={isHolographic}
-                >
-                  {isHolographic ? '✨ Holographic ON' : 'Holographic OFF'}
-                </Button>
-                {isHolographic && (
-                  <div className="mt-3 bg-gray-800 border border-gray-600 rounded p-3">
-                    <label className="text-xs text-gray-400 block mb-2">Color:</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={holographicColor}
-                        onChange={(e) => changeHolographicColor(e.target.value)}
-                        className="h-10 w-full cursor-pointer rounded border border-gray-600 bg-gray-700"
-                      />
-                      <span className="text-xs text-gray-400 min-w-[70px]">{holographicColor}</span>
-                    </div>
-                  </div>
-                )}
-              </Section>
-
-              {/* Combo Demo */}
-              <Section title="🎭 Combo Demo">
-                <Button onClick={playComboDemo} fullWidth>
-                  Play Demo Sequence
-                </Button>
-              </Section>
+              {controlsContent}
             </div>
           </motion.div>
         )}
@@ -401,8 +418,8 @@ export function AvatarAnimationControls({ head, isOpen, onToggle }: AvatarAnimat
 // Helper Components
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-6">
-      <h3 className="text-sm font-semibold text-blue-300 mb-3">{title}</h3>
+    <div className="mb-4">
+      <h3 className="text-xs font-semibold text-blue-300 mb-2">{title}</h3>
       {children}
     </div>
   );
@@ -431,7 +448,7 @@ function Button({ onClick, active, fullWidth, className = '', children }: Button
       className={`
         ${fullWidth ? 'w-full' : ''}
         ${active ? 'bg-blue-500 border-blue-400' : 'bg-gray-800 border-gray-600 hover:bg-blue-500 hover:border-blue-400'}
-        text-white border rounded px-3 py-2 text-xs transition-all duration-200 active:scale-95
+        text-white border rounded px-2 py-1.5 text-xs transition-all duration-200 active:scale-95
         ${className}
       `}
     >
