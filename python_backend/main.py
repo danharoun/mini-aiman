@@ -17,6 +17,7 @@ import os
 from typing import Literal, Sequence
 
 from dotenv import load_dotenv
+from pathlib import Path
 
 from livekit import rtc
 from livekit.agents import (
@@ -33,6 +34,8 @@ from livekit.agents.llm import function_tool
 from livekit.agents.voice import ConversationItemAddedEvent
 from livekit.plugins import openai
 
+_ROOT_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(_ROOT_DIR / ".env", override=False)
 load_dotenv()
 
 AnimationName = Literal["ok", "high_five", "hands_back", "wave"]

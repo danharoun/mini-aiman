@@ -19,10 +19,9 @@ cd python_backend
 uv venv
 source .venv/bin/activate
 uv sync
-cp .env.example .env
 ```
 
-Fill in `.env` with your LiveKit and OpenAI credentials.  
+Create a project-wide `.env` in the repository root (`cp .env.example .env`) and fill in your LiveKit/OpenAI credentials there.  
 `LIVEKIT_AGENT_NAME` defaults to `mini-aiman-python`, the same identifier the
 Next.js client uses when requesting connection details.
 
