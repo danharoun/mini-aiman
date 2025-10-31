@@ -7,7 +7,7 @@ LLM reasoning, and TTS, and is managed with [uv](https://docs.astral.sh/uv/).
 
 ## 1. Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - [uv CLI](https://docs.astral.sh/uv/getting-started/installation/)
 - LiveKit project credentials (URL, API key, API secret)
 - OpenAI API key (or compatible provider)
